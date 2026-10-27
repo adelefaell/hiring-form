@@ -15,17 +15,19 @@ const json = (body: unknown, status = 200) =>
     headers: { "Content-Type": "application/json" },
   });
 
-async function verifyTurnstile(token: unknown, secret: string, ip: string | null) {
+async function verifyTurnstile(token: unknown, secret: string) {
   if (typeof token !== "string" || !token) return false;
   const form = new FormData();
   form.append("secret", secret);
   form.append("response", token);
-  if (ip) form.append("remoteip", ip);
   const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
     method: "POST",
     body: form,
   });
-  const data = (await res.json()) as { success: boolean };
+  const data = (await res.json()) as { success: boolean; "error-codes"?: string[] };
+  if (!data.success) {
+    console.error("turnstile reject:", JSON.stringify(data["error-codes"] ?? []));
+  }
   return data.success;
 }
 
@@ -123,11 +125,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return json({ ok: true });
   }
 
-  const ip = request.headers.get("CF-Connecting-IP");
   const human = await verifyTurnstile(
     (body as Record<string, unknown>).turnstileToken,
     env.TURNSTILE_SECRET,
-    ip,
   );
   if (!human) return json({ ok: false, errors: { _form: "validation.captcha" } }, 400);
 
