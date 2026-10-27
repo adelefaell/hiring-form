@@ -25,3 +25,5 @@ dist-ssr
 *.sw?
 
 .dev.vars
+
+.playwright-cli
