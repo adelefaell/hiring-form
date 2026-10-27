@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { Turnstile } from '@marsidev/react-turnstile'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
@@ -34,10 +34,21 @@ const today = new Date().toISOString().slice(0, 10)
 
 const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY ?? '0x4AAAAAAFoUsjFtVMwRyFb8'
 
+const STORAGE_KEY = 'hiring_form_submitted_phone'
+
+function loadSubmittedPhone(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
+
 export function RegistrationForm() {
   const { t, i18n } = useTranslation()
   const [country, setCountry] = useState<'AE' | 'SA'>('AE')
   const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; message: string } | null>(null)
+  const [submitted, setSubmitted] = useState(false)
   const [token, setToken] = useState<string | null>(null)
   const [widgetNonce, setWidgetNonce] = useState(0)
 
@@ -63,6 +74,10 @@ export function RegistrationForm() {
     },
   })
 
+  const isPhoneSubmitted = useWatch({ control, name: 'phone' })
+
+  const done = submitted || (isPhoneSubmitted !== undefined && isPhoneSubmitted === loadSubmittedPhone())
+
   const onSubmit = handleSubmit(async (values) => {
     setFeedback(null)
     const result = await submitForm(values, token ?? '')
@@ -73,7 +88,10 @@ export function RegistrationForm() {
       for (const key of Object.keys(values) as Array<keyof FormInputValues>) {
         setValue(key, '')
       }
-      clearErrors()
+      try {
+        localStorage.setItem(STORAGE_KEY, values.phone)
+      } catch {}
+      setSubmitted(true)
       setFeedback({ kind: 'success', message: t('success.message') })
       return
     }
@@ -92,18 +110,6 @@ export function RegistrationForm() {
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
-      {feedback && (
-        <p
-          role="alert"
-          className={`rounded-lg border px-3 py-2 text-sm ${feedback.kind === 'success'
-            ? 'border-green-200 bg-green-50 text-green-700'
-            : 'border-red-200 bg-red-50 text-red-600'
-            }`}
-        >
-          {feedback.message}
-        </p>
-      )}
-
       <Field id="name" label={t('labels.name')} error={translateError(t, errors.name?.message)}>
         <input
           id="name"
@@ -250,7 +256,7 @@ export function RegistrationForm() {
         {...register('website')}
       />
 
-      {siteKey && (
+      {siteKey && !done && (
         <div className="min-h-[65px]">
           <Turnstile
             key={widgetNonce}
@@ -262,14 +268,28 @@ export function RegistrationForm() {
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={siteKey ? !token || isSubmitting : isSubmitting}
-        className="mt-1 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {isSubmitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-        {isSubmitting ? t('submitting') : t('submit')}
-      </button>
+      {!done && (
+        <button
+          type="submit"
+          disabled={siteKey ? !token || isSubmitting : isSubmitting}
+          className="mt-1 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isSubmitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+          {isSubmitting ? t('submitting') : t('submit')}
+        </button>
+      )}
+
+      {(feedback || done) && (
+        <p
+          role="alert"
+          className={`rounded-lg border px-3 py-2 text-sm ${feedback?.kind === 'success' || (done && !feedback)
+            ? 'border-green-200 bg-green-50 text-green-700'
+            : 'border-red-200 bg-red-50 text-red-600'
+            }`}
+        >
+          {feedback?.message ?? t('success.message')}
+        </p>
+      )}
     </form>
   )
 }
