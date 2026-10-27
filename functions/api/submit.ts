@@ -155,12 +155,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       new Date().toISOString(),
       name,
       dob,
-      phone,
+      "'" + phone, // leading apostrophe forces text so USER_ENTERED keeps the "+"
       email ?? "",
       workshop,
       address,
-    ]);
-    return json({ ok: true });
+    ]);    return json({ ok: true });
   } catch (err) {
     await env.SUBMISSIONS.delete(dedupeKey); // release the key; a retry should be allowed
     console.error(err); // visible in Cloudflare logs, never sent to the client
