@@ -87,6 +87,8 @@ async function getAccessToken(env: Env): Promise<string> {
   return data.access_token;
 }
 
+const sheetPhone = (phone: string) => `="${phone.replace(/^\+/, "00")}"`;
+
 async function appendRow(env: Env, row: string[]) {
   const token = await getAccessToken(env);
   const url =
@@ -155,7 +157,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       new Date().toISOString(),
       name,
       dob,
-      "'" + phone, // leading apostrophe forces text so USER_ENTERED keeps the "+"
+      sheetPhone(phone),
       email ?? "",
       workshop,
       address,
