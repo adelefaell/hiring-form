@@ -173,14 +173,13 @@ export function RegistrationForm() {
               country={country}
               international
               withCountryCallingCode
-              value={field.value}
-              onChange={(value) => field.onChange(value ?? '')}
-              onBlur={field.onBlur}
-              dir="ltr"
               autoComplete="tel"
               aria-invalid={errors.phone ? true : undefined}
               aria-describedby={errors.phone ? 'phone-error' : undefined}
               className={`h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm transition-shadow focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500${errors.phone ? inputErrorClass : ''}`}
+              onChange={(value) => field.onChange(value ?? '')}
+              onBlur={field.onBlur}
+              dir="ltr"
             />
           )}
         />
