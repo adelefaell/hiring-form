@@ -32,7 +32,7 @@ function CountryFlag({ id }: { id: 'AE' | 'SA' }) {
 
 const today = new Date().toISOString().slice(0, 10)
 
-const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY ?? '0x4AAAAAAFoLomo62lMFsbxS'
+const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY ?? '0x4AAAAAAFoUsjFtVMwRyFb8'
 
 export function RegistrationForm() {
   const { t, i18n } = useTranslation()
