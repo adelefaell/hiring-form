@@ -1,1 +1,52 @@
 @import "tailwindcss";
+
+html {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+html[lang='ar'] {
+  font-family: 'Noto Sans Arabic', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Subtle animated gradient behind the card. shortcut: static fallback via prefers-reduced-motion. */
+@keyframes background-drift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.bg-animated {
+  background: linear-gradient(135deg, #eef2ff, #e0e7ff, #ede9fe, #eef2ff);
+  background-size: 300% 300%;
+  animation: background-drift 18s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-animated {
+    animation: none;
+  }
+}
+
+/* react-phone-number-input: match native inputs (h-11, border, radius, focus ring) */
+.PhoneInput {
+  --PhoneInputCountrySelect-marginRight: 0;
+  gap: 0.5rem;
+}
+
+.PhoneInputInput {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  height: 100%;
+  padding: 0;
+  font-size: 0.875rem;
+  color: var(--color-slate-900);
+}
+
+.PhoneInputInput::placeholder {
+  color: var(--color-slate-400);
+}
+
+.PhoneInputCountry {
+  margin-inline-end: 0;
+}

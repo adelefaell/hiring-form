@@ -1,0 +1,63 @@
+{
+  "title": "Workshop Registration",
+  "subtitle": "Register for one of our available workshops",
+  "lang.switch": "Switch to Arabic",
+  "labels": {
+    "name": "Full name",
+    "dob": "Date of birth",
+    "phone": "Phone number",
+    "workshop": "Workshop of interest",
+    "address": "Address",
+    "email": "Email address",
+    "country": "Country"
+  },
+  "countries": {
+    "AE": "UAE",
+    "SA": "Saudi Arabia"
+  },
+  "optional": "(optional)",
+  "placeholders": {
+    "name": "Enter your full name",
+    "workshop": "Select a workshop",
+    "email": "you@example.com",
+    "address": "City, street, building number"
+  },
+  "workshops": {
+    "web-development": "Web Development",
+    "mobile-apps": "Mobile Apps",
+    "data-analysis": "Data Analysis",
+    "ui-ux-design": "UI/UX Design",
+    "digital-marketing": "Digital Marketing",
+    "cybersecurity": "Cybersecurity",
+    "cloud-computing": "Cloud Computing",
+    "project-management": "Project Management",
+    "public-speaking": "Public Speaking",
+    "ai-fundamentals": "AI Fundamentals"
+  },
+  "validation": {
+    "name.required": "Full name is required",
+    "name.min": "Name must be at least 3 characters",
+    "name.max": "Name must be at most 100 characters",
+    "dob.required": "Date of birth is required",
+    "dob.invalid": "Date of birth is not valid",
+    "dob.range": "Age must be between 18 and 60",
+    "phone.required": "Phone number is required",
+    "phone.invalid": "Phone number is not valid",
+    "phone.country": "Only a UAE or Saudi number is accepted",
+    "email.invalid": "Email address is not valid",
+    "workshop.required": "Please select a workshop",
+    "address.required": "Address is required",
+    "address.max": "Address must be at most 200 characters",
+    "website": "Form submission failed"
+  },
+  "errors": {
+    "banner": "Something went wrong. Please try again later."
+  },
+  "submit": "Submit",
+  "submitting": "Submitting...",
+  "success": {
+    "title": "Thank you!",
+    "message": "Your registration was received. We will contact you soon.",
+    "submitAnother": "Submit another response"
+  }
+}
