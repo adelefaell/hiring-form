@@ -92,7 +92,7 @@ async function appendRow(env: Env, row: string[]) {
   const url =
     `https://sheets.googleapis.com/v4/spreadsheets/${env.SHEET_ID}` +
     `/values/${encodeURIComponent(env.SHEET_RANGE)}:append` +
-    `?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
+    `?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
 
   const res = await fetch(url, {
     method: "POST",
