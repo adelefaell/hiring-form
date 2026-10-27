@@ -146,7 +146,11 @@ export function RegistrationForm() {
                 name="country"
                 value={id}
                 checked={country === id}
-                onChange={() => setCountry(id)}
+                onChange={() => {
+                  setCountry(id)
+                  setValue('phone', '')
+                  clearErrors('phone')
+                }}
                 className="size-4 accent-indigo-600"
               />
               <CountryFlag id={id} />
