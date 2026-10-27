@@ -5,13 +5,13 @@ export type SubmitResult =
   | { status: 'validation'; errors: Record<string, string> }
   | { status: 'error' }
 
-export async function submitForm(values: FormValues): Promise<SubmitResult> {
+export async function submitForm(values: FormValues, turnstileToken: string): Promise<SubmitResult> {
   let response: Response
   try {
     response = await fetch('/api/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(values),
+      body: JSON.stringify({ ...values, turnstileToken }),
     })
   } catch {
     return { status: 'error' }
@@ -19,7 +19,7 @@ export async function submitForm(values: FormValues): Promise<SubmitResult> {
 
   if (response.ok) return { status: 'success' }
 
-  if (response.status === 400) {
+  if (response.status === 400 || response.status === 409) {
     const body = (await response.json().catch(() => null)) as {
       errors?: Record<string, string>
     } | null

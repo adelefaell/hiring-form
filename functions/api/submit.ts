@@ -5,6 +5,8 @@ interface Env {
   GOOGLE_PRIVATE_KEY: string;
   SHEET_ID: string;
   SHEET_RANGE: string;
+  TURNSTILE_SECRET: string;
+  SUBMISSIONS: KVNamespace;
 }
 
 const json = (body: unknown, status = 200) =>
@@ -12,6 +14,20 @@ const json = (body: unknown, status = 200) =>
     status,
     headers: { "Content-Type": "application/json" },
   });
+
+async function verifyTurnstile(token: unknown, secret: string, ip: string | null) {
+  if (typeof token !== "string" || !token) return false;
+  const form = new FormData();
+  form.append("secret", secret);
+  form.append("response", token);
+  if (ip) form.append("remoteip", ip);
+  const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    method: "POST",
+    body: form,
+  });
+  const data = (await res.json()) as { success: boolean };
+  return data.success;
+}
 
 const b64url = (input: string | ArrayBuffer) => {
   const bytes =
@@ -88,6 +104,13 @@ async function appendRow(env: Env, row: string[]) {
 }
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+  if (!(request.headers.get("content-type") ?? "").includes("application/json")) {
+    return json({ ok: false, errors: { _form: "validation.invalid" } }, 400);
+  }
+  if (Number(request.headers.get("content-length") ?? 0) > 2048) {
+    return json({ ok: false, errors: { _form: "validation.invalid" } }, 400);
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -100,6 +123,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return json({ ok: true });
   }
 
+  const ip = request.headers.get("CF-Connecting-IP");
+  const human = await verifyTurnstile(
+    (body as Record<string, unknown>).turnstileToken,
+    env.TURNSTILE_SECRET,
+    ip,
+  );
+  if (!human) return json({ ok: false, errors: { _form: "validation.captcha" } }, 400);
+
   const parsed = formSchema.safeParse(body);
   if (!parsed.success) {
     const errors: Record<string, string> = {};
@@ -111,6 +142,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
 
   const { name, dob, phone, email, workshop, address } = parsed.data;
+  const dedupeKey = `phone:${phone}`; // one registration per E.164 phone
+  if (await env.SUBMISSIONS.get(dedupeKey)) {
+    return json({ ok: false, errors: { phone: "validation.phone.duplicate" } }, 409);
+  }
+
+  // claim the key before writing so near-simultaneous submits can't both slip through
+  await env.SUBMISSIONS.put(dedupeKey, new Date().toISOString());
+
   try {
     await appendRow(env, [
       new Date().toISOString(),
@@ -123,6 +162,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     ]);
     return json({ ok: true });
   } catch (err) {
+    await env.SUBMISSIONS.delete(dedupeKey); // release the key; a retry should be allowed
     console.error(err); // visible in Cloudflare logs, never sent to the client
     return json({ ok: false }, 502);
   }

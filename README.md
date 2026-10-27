@@ -1,35 +1,34 @@
-# React + TypeScript + Vite
+# Hiring Form
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Workshop/hiring registration form. React 19 + Vite + TypeScript + Tailwind v4. Submits to a Google Sheet via a Cloudflare Pages Function.
 
-Currently, two official plugins are available:
+## Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Copy `.dev.vars.example` to `.dev.vars` with your Google service-account keys (`GOOGLE_CLIENT_EMAIL`, `GOOGLE_PRIVATE_KEY`, `SHEET_ID`, `SHEET_RANGE`) and `TURNSTILE_SECRET`. Set the same four Google vars plus `TURNSTILE_SECRET` as Pages secrets in prod (deploys don't pick up `.dev.vars`).
 
-## React Compiler
+Frontend env: `VITE_TURNSTILE_SITE_KEY` (in `.env.local` locally). Test keys: site `1x00000000000000000000AA`, secret `1x0000000000000000000000000000000AA`.
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-You can also try [the experimental native React Compiler support in plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#rust-react-compiler) by using `compiler: true` in the plugin options instead of using the Babel plugin.
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+pnpm install
+pnpm dev                       # vite, proxies /api to :8788
+pnpm build && pnpm pages:dev   # local backend with KV + functions
+pnpm lint && pnpm build        # verify
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Deploy
+
+One-time (per account): `pnpm wrangler kv namespace create SUBMISSIONS`, then bind it in the Pages project (Settings → Functions → KV namespace bindings, variable name `SUBMISSIONS`).
+
+```bash
+pnpm build && CLOUDFLARE_ACCOUNT_ID=<id> npx wrangler pages deploy dist --project-name hiring-form
+```
+
+## Spam protection
+
+Honeypot, server-verified Cloudflare Turnstile, and an edge rate limit. Duplicates are prevented by a KV-backed uniqueness check on the E.164 phone number, with the key released if the Sheets write fails.
+
+Edge rate limit is dashboard-only: your domain → Security → WAF → Rate limiting rules → URI Path `/api/submit` Method POST, block > 5 req/min per IP.
+
+## Note
+
+KV is eventually consistent: two simultaneous submits with the same phone can both pass. Airtight fix is D1 with a UNIQUE constraint; overkill here. Sheet-side duplicate check on the phone column is a cheap backstop.

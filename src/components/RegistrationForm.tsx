@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
+import { Turnstile } from '@marsidev/react-turnstile'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
 import PhoneInput from 'react-phone-number-input/input'
@@ -31,10 +32,14 @@ function CountryFlag({ id }: { id: 'AE' | 'SA' }) {
 
 const today = new Date().toISOString().slice(0, 10)
 
+const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY ?? '0x4AAAAAAFoLomo62lMFsbxS'
+
 export function RegistrationForm() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [country, setCountry] = useState<'AE' | 'SA'>('AE')
   const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; message: string } | null>(null)
+  const [token, setToken] = useState<string | null>(null)
+  const [widgetNonce, setWidgetNonce] = useState(0)
 
   const {
     register,
@@ -60,7 +65,10 @@ export function RegistrationForm() {
 
   const onSubmit = handleSubmit(async (values) => {
     setFeedback(null)
-    const result = await submitForm(values)
+    const result = await submitForm(values, token ?? '')
+    // tokens are single-use; remount clears the widget so a retry re-verifies
+    setWidgetNonce((n) => n + 1)
+    setToken(null)
     if (result.status === 'success') {
       for (const key of Object.keys(values) as Array<keyof FormInputValues>) {
         setValue(key, '')
@@ -71,7 +79,11 @@ export function RegistrationForm() {
     }
     if (result.status === 'validation') {
       for (const [field, key] of Object.entries(result.errors)) {
-        if (field in values) setError(field as keyof FormInputValues, { message: t(key) })
+        if (field === '_form') {
+          setFeedback({ kind: 'error', message: t(key) })
+        } else if (field in values) {
+          setError(field as keyof FormInputValues, { message: t(key) })
+        }
       }
       return
     }
@@ -234,9 +246,21 @@ export function RegistrationForm() {
         {...register('website')}
       />
 
+      {siteKey && (
+        <div className="min-h-[65px]">
+          <Turnstile
+            key={widgetNonce}
+            siteKey={siteKey}
+            options={{ language: i18n.language, theme: 'light' }}
+            onSuccess={setToken}
+            onExpire={() => setToken(null)}
+          />
+        </div>
+      )}
+
       <button
         type="submit"
-        disabled={isSubmitting}
+        disabled={siteKey ? !token || isSubmitting : isSubmitting}
         className="mt-1 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isSubmitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}

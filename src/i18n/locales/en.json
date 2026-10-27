@@ -44,11 +44,14 @@
     "phone.required": "Phone number is required",
     "phone.invalid": "Phone number is not valid",
     "phone.country": "Only a UAE or Saudi number is accepted",
+    "phone.duplicate": "This phone number is already registered",
     "email.invalid": "Email address is not valid",
     "workshop.required": "Please select a workshop",
     "address.required": "Address is required",
     "address.max": "Address must be at most 200 characters",
-    "website": "Form submission failed"
+    "website": "Form submission failed",
+    "invalid": "Form submission failed",
+    "captcha": "Please complete the security check"
   },
   "errors": {
     "banner": "Something went wrong. Please try again later."
